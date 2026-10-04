@@ -1,14 +1,20 @@
+name: RideLink CI
+
+on:
+  push:
+    branches:
+      - main
+      - account-service
+      - driver-service
+      - ride-service
+      - fare-payment-service
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        service:
-          - account-service
-          - driver-service/driver-service
-          - _ride-service/ride-service
-          - fare-payment-service
 
     steps:
       - name: Checkout
@@ -21,20 +27,28 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Check service folder
-        id: check-service
+      - name: Build and test available services
         shell: bash
         run: |
-          if [ -f "${{ matrix.service }}/mvnw" ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping ${{ matrix.service }} because it is not present in this branch."
-          fi
+          services=(
+            "account-service"
+            "driver-service/driver-service"
+            "_ride-service/ride-service"
+            "fare-payment-service"
+          )
 
-      - name: Build and test
-        if: steps.check-service.outputs.exists == 'true'
-        working-directory: ${{ matrix.service }}
-        run: |
-          chmod +x mvnw
-          ./mvnw clean test
+          for service in "${services[@]}"; do
+            if [ -f "$service/mvnw" ]; then
+              echo "======================================"
+              echo "Testing: $service"
+              echo "======================================"
+
+              chmod +x "$service/mvnw"
+              (
+                cd "$service"
+                ./mvnw clean test
+              )
+            else
+              echo "Skipping $service - not present in this branch."
+            fi
+          done
