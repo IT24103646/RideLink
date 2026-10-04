@@ -1,0 +1,54 @@
+name: RideLink CI
+
+on:
+  push:
+    branches:
+      - main
+      - account-service
+      - driver-service
+      - ride-service
+      - fare-payment-service
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build and test available services
+        shell: bash
+        run: |
+          services=(
+            "account-service"
+            "driver-service/driver-service"
+            "_ride-service/ride-service"
+            "fare-payment-service"
+          )
+
+          for service in "${services[@]}"; do
+            if [ -f "$service/mvnw" ]; then
+              echo "======================================"
+              echo "Testing: $service"
+              echo "======================================"
+
+              chmod +x "$service/mvnw"
+              (
+                cd "$service"
+                ./mvnw clean test
+              )
+            else
+              echo "Skipping $service - not present in this branch."
+            fi
+          done
