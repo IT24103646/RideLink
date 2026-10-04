@@ -1,0 +1,41 @@
+{
+  "info": {
+    "name": "RideLink Fare and Payment Service",
+    "description": "Fare estimates, simulated payments, receipts, validation, authorization, and downstream failure examples.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "farePaymentBaseUrl", "value": "http://localhost:8083" },
+    { "key": "token", "value": "REPLACE_WITH_ACCOUNT_SERVICE_JWT" },
+    { "key": "rideId", "value": "REPLACE_WITH_RIDE_ID" },
+    { "key": "estimateId", "value": "REPLACE_WITH_ESTIMATE_ID" },
+    { "key": "paymentId", "value": "REPLACE_WITH_PAYMENT_ID" }
+  ],
+  "item": [
+    {
+      "name": "Estimate fare success",
+      "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"pickup\": \"SLIIT Malabe Campus\",\n  \"destination\": \"Colombo Fort\",\n  \"estimatedDistanceKm\": 18.5,\n  \"estimatedDurationMinutes\": 42\n}" }, "url": "{{farePaymentBaseUrl}}/api/fares/estimate" }
+    },
+    {
+      "name": "Estimate fare invalid input",
+      "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"pickup\": \"\",\n  \"destination\": \"Colombo Fort\",\n  \"estimatedDistanceKm\": 0,\n  \"estimatedDurationMinutes\": -1\n}" }, "url": "{{farePaymentBaseUrl}}/api/fares/estimate" }
+    },
+    { "name": "Get estimate", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{farePaymentBaseUrl}}/api/fares/estimates/{{estimateId}}" } },
+    {
+      "name": "Payment success",
+      "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"rideId\": \"{{rideId}}\",\n  \"actualDistanceKm\": 17.8,\n  \"actualDurationMinutes\": 39,\n  \"paymentMethod\": \"CARD\",\n  \"simulateFailure\": false\n}" }, "url": "{{farePaymentBaseUrl}}/api/payments" }
+    },
+    {
+      "name": "Simulated payment failure",
+      "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"rideId\": \"{{rideId}}\",\n  \"actualDistanceKm\": 17.8,\n  \"actualDurationMinutes\": 39,\n  \"paymentMethod\": \"CARD\",\n  \"simulateFailure\": true\n}" }, "url": "{{farePaymentBaseUrl}}/api/payments" }
+    },
+    { "name": "Payment for non-completed ride", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"rideId\":\"{{rideId}}\",\"actualDistanceKm\":10,\"actualDurationMinutes\":20,\"paymentMethod\":\"CARD\",\"simulateFailure\":false}" }, "url": "{{farePaymentBaseUrl}}/api/payments" } },
+    { "name": "Duplicate payment", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"rideId\":\"{{rideId}}\",\"actualDistanceKm\":17.8,\"actualDurationMinutes\":39,\"paymentMethod\":\"CARD\",\"simulateFailure\":false}" }, "url": "{{farePaymentBaseUrl}}/api/payments" } },
+    { "name": "Get payment", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{farePaymentBaseUrl}}/api/payments/{{paymentId}}" } },
+    { "name": "Get payment by ride", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{farePaymentBaseUrl}}/api/payments/ride/{{rideId}}" } },
+    { "name": "Get receipt", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{farePaymentBaseUrl}}/api/payments/{{paymentId}}/receipt" } },
+    { "name": "Unauthorized request", "request": { "method": "GET", "url": "{{farePaymentBaseUrl}}/api/payments/{{paymentId}}" } },
+    { "name": "Forbidden ownership", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{farePaymentBaseUrl}}/api/payments/another-users-payment" } },
+    { "name": "Ride Service unavailable", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{farePaymentBaseUrl}}/api/payments/ride/{{rideId}}" } }
+  ]
+}
